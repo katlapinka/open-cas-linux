@@ -6,13 +6,10 @@ import csv
 
 import json
 import re
-from api.cas import casadm
 from test_utils.output import CmdException
-from test_utils.size import parse_unit
 from storage_devices.device import Device
-from api.cas.cache_config import *
-from api.cas.casadm_params import *
-from api.cas.version import CasVersion
+
+from packaging import version
 from datetime import timedelta
 from typing import List
 
@@ -274,4 +271,4 @@ def get_seq_cut_off_parameters(cache_id: int, core_id: int):
 def get_casadm_version():
     casadm_output = casadm.print_version(OutputFormat.csv).stdout.split('\n')
     version_str = casadm_output[1].split(',')[-1]
-    return CasVersion.from_version_string(version_str)
+    return version.parse(version_str)
