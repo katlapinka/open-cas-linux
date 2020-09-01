@@ -1,5 +1,5 @@
 #
-# Copyright(c) 2019 Intel Corporation
+# Copyright(c) 2019-2020 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
@@ -303,9 +303,10 @@ def test_ioclass_file_offset():
             TestRun.LOGGER.error(f"Inappropriately cached offset: {file_offset}")
 
 
+@pytest.mark.os_dependent
 @pytest.mark.require_disk("cache", DiskTypeSet([DiskType.optane, DiskType.nand]))
 @pytest.mark.require_disk("core", DiskTypeLowerThan("cache"))
-@pytest.mark.parametrize("filesystem", Filesystem)
+@pytest.mark.parametrizex("filesystem", Filesystem)
 def test_ioclass_file_size(filesystem):
     """
     File size IO class rules are configured in a way that each tested file size is unambiguously

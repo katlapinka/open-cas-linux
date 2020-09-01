@@ -1,5 +1,5 @@
 #
-# Copyright(c) 2019 Intel Corporation
+# Copyright(c) 2019-2020 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
@@ -55,8 +55,7 @@ class InitConfig:
     @classmethod
     def create_default_init_config(cls):
         cas_version = casadm_parser.get_casadm_version()
-        fs_utils.write_file(opencas_conf_path,
-                            f"version={'.'.join(str(x) for x in cas_version.release[0:3])}")
+        fs_utils.write_file(opencas_conf_path, f"version={cas_version.base}")
 
 
 class CacheConfigLine:

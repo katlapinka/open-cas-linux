@@ -1,10 +1,11 @@
 #
-# Copyright(c) 2019 Intel Corporation
+# Copyright(c) 2019-2020 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
 import os
 import sys
+from datetime import timedelta
 
 import pytest
 import yaml
@@ -47,7 +48,7 @@ def pytest_runtest_setup(item):
         raise Exception("You need to specify DUT config. See the example_dut_config.py file.")
 
     dut_config['plugins_dir'] = os.path.join(os.path.dirname(__file__), "../lib")
-    dut_config['opt_plugins'] = {"test_wrapper": {}, "serial_log": {}}
+    dut_config['opt_plugins'] = {"test_wrapper": {}, "serial_log": {}, "power_control": {}}
 
     try:
         TestRun.prepare(item, dut_config)
@@ -55,6 +56,15 @@ def pytest_runtest_setup(item):
         test_name = item.name.split('[')[0]
         TestRun.LOGGER = create_log(item.config.getoption('--log-path'), test_name)
 
+        TestRun.presetup()
+        try:
+            TestRun.executor.wait_for_connection(timedelta(seconds=20))
+        except Exception:
+            try:
+                TestRun.plugin_manager.get_plugin('power_control').power_cycle()
+                TestRun.executor.wait_for_connection()
+            except Exception:
+                raise Exception("Failed to connect to DUT.")
         TestRun.setup()
     except Exception as ex:
         raise Exception(f"Exception occurred during test setup:\n"
@@ -82,15 +92,12 @@ def pytest_runtest_teardown():
     This method is executed always in the end of each test, even if it fails or raises exception in
     prepare stage.
     """
-    if TestRun.outcome == "skipped":
-        return
-
     TestRun.LOGGER.end_all_groups()
 
     with TestRun.LOGGER.step("Cleanup after test"):
         try:
             if TestRun.executor:
-                if TestRun.executor.is_active():
+                if not TestRun.executor.is_active():
                     TestRun.executor.wait_for_connection()
                 Udev.enable()
                 kill_all_io()
@@ -116,12 +123,16 @@ def pytest_configure(config):
     TestRun.configure(config)
 
 
+def pytest_generate_tests(metafunc):
+    TestRun.generate_tests(metafunc)
+
+
 def pytest_addoption(parser):
+    TestRun.addoption(parser)
     parser.addoption("--dut-config", action="store", default="None")
     parser.addoption("--log-path", action="store",
                      default=f"{os.path.join(os.path.dirname(__file__), '../results')}")
-    parser.addoption("--force-reinstall", action="store", default="False")
-    # TODO: investigate whether it is possible to pass the last param as bool
+    parser.addoption("--force-reinstall", action="store_true", default=False)
 
 
 def unmount_cas_devices():
@@ -147,11 +158,12 @@ def unmount_cas_devices():
 
 
 def get_force_param(item):
-    return item.config.getoption("--force-reinstall") is not "False"
+    return item.config.getoption("--force-reinstall")
 
 
 def base_prepare(item):
     with TestRun.LOGGER.step("Cleanup before test"):
+        TestRun.executor.run("pkill --signal=SIGKILL fsck")
         Udev.enable()
         kill_all_io()
         DeviceMapper.remove_all()
@@ -168,13 +180,15 @@ def base_prepare(item):
 
         for disk in TestRun.dut.disks:
             disk.umount_all_partitions()
-            if not create_partition_table(disk, PartitionTable.gpt):
-                raise Exception(f"Failed to remove partitions from {disk}")
+            disk.remove_partitions()
+            create_partition_table(disk, PartitionTable.gpt)
 
         if get_force_param(item) and not TestRun.usr.already_updated:
+            installer.rsync_opencas_sources()
             installer.reinstall_opencas()
         elif not installer.check_if_installed():
-            installer.install_opencas()
+            installer.rsync_opencas_sources()
+            installer.set_up_opencas()
         TestRun.usr.already_updated = True
         TestRun.LOGGER.add_build_info(f'Commit hash:')
         TestRun.LOGGER.add_build_info(f"{git.get_current_commit_hash()}")

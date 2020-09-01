@@ -1,5 +1,5 @@
 #
-# Copyright(c) 2019 Intel Corporation
+# Copyright(c) 2019-2020 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
@@ -7,8 +7,8 @@ import pytest
 
 from api.cas import casadm, casadm_parser, cli, cli_messages
 from api.cas.cache_config import CacheMode
-from storage_devices.disk import DiskType, DiskTypeSet, DiskTypeLowerThan
 from core.test_run import TestRun
+from storage_devices.disk import DiskType, DiskTypeSet, DiskTypeLowerThan
 from test_tools import fs_utils
 from test_tools.disk_utils import Filesystem
 from test_utils.size import Size, Unit
@@ -17,7 +17,7 @@ mount_point = "/mnt/cas"
 test_file_path = f"{mount_point}/test_file"
 
 
-@pytest.mark.parametrize("cache_mode", CacheMode)
+@pytest.mark.parametrizex("cache_mode", CacheMode)
 @pytest.mark.require_disk("cache", DiskTypeSet([DiskType.optane, DiskType.nand]))
 @pytest.mark.require_disk("core", DiskTypeLowerThan("cache"))
 def test_load_cache_with_mounted_core(cache_mode):
@@ -78,7 +78,7 @@ def test_load_cache_with_mounted_core(cache_mode):
         casadm.stop_all_caches()
 
 
-@pytest.mark.parametrize("cache_mode", CacheMode)
+@pytest.mark.parametrizex("cache_mode", CacheMode)
 @pytest.mark.require_disk("cache", DiskTypeSet([DiskType.optane, DiskType.nand]))
 @pytest.mark.require_disk("core", DiskTypeLowerThan("cache"))
 def test_stop_cache_with_mounted_partition(cache_mode):
@@ -109,11 +109,11 @@ def test_stop_cache_with_mounted_partition(cache_mode):
     with TestRun.step("Try to remove core from cache."):
         output = TestRun.executor.run_expect_fail(cli.remove_core_cmd(cache_id=str(cache.cache_id),
                                                                       core_id=str(core.core_id)))
-        cli_messages.check_msg(output, cli_messages.remove_mounted_core)
+        cli_messages.check_stderr_msg(output, cli_messages.remove_mounted_core)
 
     with TestRun.step("Try to stop CAS."):
         output = TestRun.executor.run_expect_fail(cli.stop_cmd(cache_id=str(cache.cache_id)))
-        cli_messages.check_msg(output, cli_messages.stop_cache_mounted_core)
+        cli_messages.check_stderr_msg(output, cli_messages.stop_cache_mounted_core)
 
     with TestRun.step("Unmount core device."):
         core.unmount()
@@ -122,7 +122,7 @@ def test_stop_cache_with_mounted_partition(cache_mode):
         casadm.stop_all_caches()
 
 
-@pytest.mark.parametrize("cache_mode", CacheMode)
+@pytest.mark.parametrizex("cache_mode", CacheMode)
 @pytest.mark.require_disk("cache", DiskTypeSet([DiskType.optane, DiskType.nand]))
 @pytest.mark.require_disk("core", DiskTypeLowerThan("cache"))
 def test_add_cached_core(cache_mode):
@@ -158,12 +158,12 @@ def test_add_cached_core(cache_mode):
         output = TestRun.executor.run_expect_fail(
             cli.add_core_cmd(cache_id=str(cache2.cache_id), core_dev=str(core_part.system_path),
                              core_id=str(core.core_id)))
-        cli_messages.check_msg(output, cli_messages.add_cached_core)
+        cli_messages.check_stderr_msg(output, cli_messages.add_cached_core)
 
     with TestRun.step("Try adding the same core device to the same cache for the second time."):
         output = TestRun.executor.run_expect_fail(
             cli.add_core_cmd(cache_id=str(cache1.cache_id), core_dev=str(core_part.system_path)))
-        cli_messages.check_msg(output, cli_messages.add_cached_core)
+        cli_messages.check_stderr_msg(output, cli_messages.add_cached_core)
 
     with TestRun.step("Stop caches."):
         casadm.stop_all_caches()

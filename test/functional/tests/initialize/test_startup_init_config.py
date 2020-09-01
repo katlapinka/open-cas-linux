@@ -1,5 +1,5 @@
 #
-# Copyright(c) 2019 Intel Corporation
+# Copyright(c) 2019-2020 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
@@ -22,11 +22,12 @@ mountpoint = "/mnt"
 filepath = f"{mountpoint}/file"
 
 
+@pytest.mark.os_dependent
 @pytest.mark.remote_only
 @pytest.mark.require_disk("cache", DiskTypeSet([DiskType.optane, DiskType.nand]))
 @pytest.mark.require_disk("core", DiskTypeLowerThan("cache"))
-@pytest.mark.parametrize("cache_mode", CacheMode)
-@pytest.mark.parametrize("filesystem", Filesystem)
+@pytest.mark.parametrizex("cache_mode", CacheMode)
+@pytest.mark.parametrizex("filesystem", Filesystem)
 def test_cas_startup(cache_mode, filesystem):
     """
     title: Test for starting CAS on system startup.

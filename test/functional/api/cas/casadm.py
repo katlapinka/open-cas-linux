@@ -46,7 +46,7 @@ def stop_cache(cache_id: int, no_data_flush: bool = False, shortcut: bool = Fals
 
 
 def add_core(cache: Cache, core_dev: Device, core_id: int = None, shortcut: bool = False):
-    _core_id = None if core_id is None else str(id)
+    _core_id = None if core_id is None else str(core_id)
     output = TestRun.executor.run(
         add_core_cmd(cache_id=str(cache.cache_id), core_dev=core_dev.system_path,
                      core_id=_core_id, shortcut=shortcut))
@@ -72,11 +72,33 @@ def remove_detached(core_device: Device, shortcut: bool = False):
     return output
 
 
-def try_add(core_device: Device, cache_id: int):
-    output = TestRun.executor.run(script_try_add_cmd(str(cache_id), core_device.system_path))
+def try_add(core_device: Device, cache_id: int, core_id: int = None):
+    output = TestRun.executor.run(script_try_add_cmd(str(cache_id), core_device.system_path,
+                                                     str(core_id) if core_id is not None else None))
     if output.exit_code != 0:
         raise CmdException("Failed to execute try add script command.", output)
     return Core(core_device.system_path, cache_id)
+
+
+def purge_cache(cache_id: int):
+    output = TestRun.executor.run(script_purge_cache_cmd(str(cache_id)))
+    if output.exit_code != 0:
+        raise CmdException("Purge cache failed.", output)
+    return output
+
+
+def purge_core(cache_id: int, core_id: int):
+    output = TestRun.executor.run(script_purge_core_cmd(str(cache_id), str(core_id)))
+    if output.exit_code != 0:
+        raise CmdException("Purge core failed.", output)
+    return output
+
+
+def detach_core(cache_id: int, core_id: int):
+    output = TestRun.executor.run(script_detach_core_cmd(str(cache_id), str(core_id)))
+    if output.exit_code != 0:
+        raise CmdException("Failed to execute detach core script command.", output)
+    return output
 
 
 def reset_counters(cache_id: int, core_id: int = None, shortcut: bool = False):
@@ -126,11 +148,11 @@ def print_version(output_format: OutputFormat = None, shortcut: bool = False):
     return output
 
 
-def format_nvme(cache_dev: Device, force: bool = False, shortcut: bool = False):
+def zero_metadata(cache_dev: Device, shortcut: bool = False):
     output = TestRun.executor.run(
-        format_cmd(cache_dev=cache_dev.system_path, force=force, shortcut=shortcut))
+        zero_metadata_cmd(cache_dev=cache_dev.system_path, shortcut=shortcut))
     if output.exit_code != 0:
-        raise CmdException("Format command failed.", output)
+        raise CmdException("Failed to wipe metadata.", output)
     return output
 
 

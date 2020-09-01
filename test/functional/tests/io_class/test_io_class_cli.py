@@ -1,5 +1,5 @@
 #
-# Copyright(c) 2019 Intel Corporation
+# Copyright(c) 2019-2020 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
@@ -20,7 +20,7 @@ ioclass_config_path = "/tmp/opencas_ioclass.conf"
 
 @pytest.mark.require_disk("cache", DiskTypeSet([DiskType.optane, DiskType.nand]))
 @pytest.mark.require_disk("core", DiskTypeLowerThan("cache"))
-@pytest.mark.parametrize("cache_mode", CacheMode)
+@pytest.mark.parametrizex("cache_mode", CacheMode)
 def test_ioclass_export_configuration(cache_mode):
     """
     title: Export IO class configuration to a file

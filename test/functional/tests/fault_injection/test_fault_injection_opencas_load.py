@@ -2,14 +2,13 @@
 # Copyright(c) 2020 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
-from time import sleep
 
 import pytest
 
 from api.cas import casadm, casadm_parser, cli, cli_messages
 from api.cas.cache_config import CacheMode, CleaningPolicy, CacheModeTrait
-from storage_devices.disk import DiskType, DiskTypeSet, DiskTypeLowerThan
 from core.test_run import TestRun
+from storage_devices.disk import DiskType, DiskTypeSet, DiskTypeLowerThan
 from test_tools import fs_utils
 from test_tools.dd import Dd
 from test_tools.disk_utils import Filesystem
@@ -20,8 +19,8 @@ mount_point = "/mnt/cas"
 test_file_path = f"{mount_point}/test_file"
 
 
-@pytest.mark.parametrize("filesystem", Filesystem)
-@pytest.mark.parametrize("cache_mode", CacheMode.with_traits(CacheModeTrait.LazyWrites))
+@pytest.mark.parametrizex("filesystem", Filesystem)
+@pytest.mark.parametrizex("cache_mode", CacheMode.with_traits(CacheModeTrait.LazyWrites))
 @pytest.mark.require_disk("cache", DiskTypeSet([DiskType.optane, DiskType.nand]))
 @pytest.mark.require_disk("core", DiskTypeLowerThan("cache"))
 def test_stop_no_flush_load_cache(cache_mode, filesystem):
@@ -69,7 +68,7 @@ def test_stop_no_flush_load_cache(cache_mode, filesystem):
         output = TestRun.executor.run_expect_fail(cli.start_cmd(
             cache_dev=str(cache_part.system_path), cache_mode=str(cache_mode.name.lower()),
             force=False, load=False))
-        cli_messages.check_msg(output, cli_messages.start_cache_with_existing_metadata)
+        cli_messages.check_stderr_msg(output, cli_messages.start_cache_with_existing_metadata)
 
     with TestRun.step("Load cache."):
         cache = casadm.load_cache(cache.cache_device)
@@ -146,7 +145,7 @@ def test_stop_no_flush_load_cache_no_fs(cache_mode):
         output = TestRun.executor.run_expect_fail(cli.start_cmd(
             cache_dev=str(cache_part.system_path), cache_mode=str(cache_mode.name.lower()),
             force=False, load=False))
-        cli_messages.check_msg(output, cli_messages.start_cache_with_existing_metadata)
+        cli_messages.check_stderr_msg(output, cli_messages.start_cache_with_existing_metadata)
 
     with TestRun.step("Load cache."):
         cache = casadm.load_cache(cache.cache_device)

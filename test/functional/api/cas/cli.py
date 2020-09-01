@@ -19,9 +19,25 @@ def add_core_cmd(cache_id: str, core_dev: str, core_id: str = None, shortcut: bo
     return casadm_bin + command
 
 
-def script_try_add_cmd(cache_id: str, core_dev: str):
-    return f"{casadm_bin} --script --add-core --try-add --cache-id {cache_id} " \
-           f"--core-device {core_dev}"
+def script_try_add_cmd(cache_id: str, core_dev: str, core_id: str = None):
+    command = f"{casadm_bin} --script --add-core --try-add --cache-id {cache_id} " \
+              f"--core-device {core_dev}"
+    if core_id:
+        command += f" --core-id {core_id}"
+    return command
+
+
+def script_purge_cache_cmd(cache_id: str):
+    return f"{casadm_bin} --script --purge-cache --cache-id {cache_id}"
+
+
+def script_purge_core_cmd(cache_id: str, core_id: str):
+    return f"{casadm_bin} --script --purge-core --cache-id {cache_id} --core-id {core_id}"
+
+
+def script_detach_core_cmd(cache_id: str, core_id: str):
+    return f"{casadm_bin} --script --remove-core --detach --cache-id {cache_id} " \
+           f"--core-id {core_id}"
 
 
 def remove_core_cmd(cache_id: str, core_id: str, force: bool = False, shortcut: bool = False):
@@ -96,10 +112,9 @@ def print_statistics_cmd(cache_id: str, core_id: str = None, per_io_class: bool 
     return casadm_bin + command
 
 
-def format_cmd(cache_dev: str, force: bool = False, shortcut: bool = False):
-    command = (" -N -F -d " if shortcut else " --nvme --format --device ") + cache_dev
-    if force:
-        command += " -f" if shortcut else " --force"
+def zero_metadata_cmd(cache_dev: str, shortcut: bool):
+    command = " --zero-metadata"
+    command += (" -d " if shortcut else " --device ") + cache_dev
     return casadm_bin + command
 
 
